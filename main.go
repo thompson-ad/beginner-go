@@ -17,6 +17,8 @@ func main() {
 		panic(err)
 	}
 
+	defer app.DB.Close()
+
 	app.Logger.Println("We are running our app!")
 
 	server := &http.Server{
