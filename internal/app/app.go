@@ -3,6 +3,7 @@ package app
 import (
 	"beginnerGo/internal/api"
 	"beginnerGo/internal/store"
+	"beginnerGo/migrations"
 	"database/sql"
 	"fmt"
 	"log"
@@ -18,15 +19,18 @@ type App struct {
 
 func NewApplication() (*App, error) {
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
-
-	// Stores here
 	db, err := store.Open()
-
 	if err != nil {
 		return nil, err
 	}
-	// Handlers here
-	workoutHandler := api.NewWorkoutHandler()
+	migrateErr := store.MigrateFS(db, migrations.FS, ".")
+	if migrateErr != nil {
+		panic(migrateErr)
+	}
+
+	workoutStore := store.NewPostgresWorkoutStore(db)
+
+	workoutHandler := api.NewWorkoutHandler(workoutStore, logger)
 
 	app := &App{
 		Logger:         logger,
